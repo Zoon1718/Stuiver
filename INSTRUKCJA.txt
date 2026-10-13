@@ -1,0 +1,70 @@
+STUIVER – instalacja jako aplikacja na telefonie
+=================================================
+
+Ten folder to cała aplikacja (strona + ikony + tryb offline). Wystarczy ją
+wgrać na darmowy hosting, a potem "zainstalować" z przeglądarki telefonu.
+Pojawi się z własną ikoną i będzie się otwierać na pełnym ekranie, bez paska
+przeglądarki i bez żadnego odnośnika do Claude.
+
+WAŻNE: w tej wersji dane są zapisane tylko na tym telefonie. Nie ma
+synchronizacji z komputerem (ta działa tylko w wersji otwieranej w Claude).
+Dlatego regularnie rób kopię: Ustawienia (zębatka) > Ogólne > "Pobierz kopię
+zapasową". Kopię wczytasz na innym urządzeniu przyciskiem "Importuj dane
+z pliku" pod listą transakcji.
+
+KROK 1. Wgraj folder na hosting (wybierz jedną drogę)
+
+A) Netlify Drop (najprościej)
+   1. Wejdź na https://app.netlify.com/drop
+   2. Przeciągnij na stronę cały folder "stuiver-pwa" (albo rozpakowany ZIP).
+   3. Załóż darmowe konto, żeby strona nie wygasła, i skopiuj adres, np.
+      https://twoja-nazwa.netlify.app
+
+B) GitHub Pages
+   1. Załóż darmowe konto na https://github.com i nowe repozytorium.
+   2. Wgraj zawartość folderu (plik index.html musi być w głównym katalogu).
+   3. Settings > Pages > Source: "Deploy from a branch", gałąź main, folder /root.
+   4. Adres: https://twoja-nazwa.github.io/nazwa-repozytorium/
+
+KROK 2. Zainstaluj na telefonie
+
+Android (Chrome):
+   Otwórz adres w Chrome > menu (trzy kropki) > "Zainstaluj aplikację"
+   (albo "Dodaj do ekranu głównego") > Zainstaluj.
+
+iPhone (Safari):
+   Otwórz adres w Safari > przycisk Udostępnij > "Do ekranu początkowego" > Dodaj.
+
+Po instalacji otwieraj aplikację z ikony na ekranie głównym. Dane są
+zapisane w pamięci tej aplikacji. Nie czyść danych witryny w przeglądarce
+i nie odinstalowuj aplikacji bez kopii zapasowej.
+
+KROK 3. Przenieś dotychczasowe dane (jeśli je masz)
+
+W starej wersji (w Claude): Ustawienia > Ogólne > "Pobierz kopię zapasową".
+W nowej aplikacji: "Importuj dane z pliku" i wybierz pobrany plik.
+
+AKTUALIZACJA APLIKACJI NA GITHUBIE (gdy dostaniesz nową wersję plików)
+-----------------------------------------------------------------------
+1. Rozpakuj nowy ZIP.
+2. Wejdź na stronę repozytorium na GitHubie > "Add file" > "Upload files".
+3. Przeciągnij pliki z nowego folderu (przede wszystkim index.html i sw.js).
+   GitHub podmieni pliki o tych samych nazwach.
+4. Kliknij "Commit changes" (Commit directly to the main branch).
+5. Po 1-2 minutach nowa wersja jest na stronie. Na telefonie zamknij aplikację
+   całkiem i otwórz ją ponownie (czasem dwa razy), żeby pobrała nową wersję.
+Twoje dane zostają, bo są zapisane w telefonie, a nie w plikach aplikacji.
+
+JĘZYK
+-----
+Ustawienia > Ogólne > "Język / Language": Polski albo English. Aplikacja
+przeładuje się w wybranym języku.
+
+INSTALACJA, GDY MENU PRZEGLĄDARKI NIE POKAZUJE "ZAINSTALUJ"
+-----------------------------------------------------------
+- Używaj Chrome na Androidzie i otwórz adres bezpośrednio w Chrome
+  (nie w przeglądarce wbudowanej w inną aplikację).
+- W Ustawieniach aplikacji (zębatka) > Ogólne pojawi się przycisk
+  "Zainstaluj aplikację na tym urządzeniu", jeśli Chrome uzna stronę
+  za instalowalną.
+- W menu Chrome (trzy kropki) może być też "Dodaj do ekranu głównego".

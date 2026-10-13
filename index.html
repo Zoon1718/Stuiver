@@ -142,7 +142,10 @@ select:focus,input:focus{border-color:var(--ac);box-shadow:0 0 0 4px rgba(249,11
   <div class="ch"><h3 style="margin:0">Ustawienia</h3><button class="lnk" id="sclose" type="button" style="width:auto;margin:0;padding:8px 18px">Gotowe</button></div>
   <div class="stabs"><button type="button" class="on">Ogólne</button><button type="button">Kategorie</button><button type="button">Cykliczne</button><button type="button">Budżety</button></div>
   <div id="sp0">
-    <div class="sh2"><b>Motyw</b></div>
+    <div class="sh2"><b>Język / Language</b></div>
+    <div class="sg"><button id="lpl" type="button">Polski</button><button id="len" type="button">English</button></div>
+    <button class="lnk" id="inst" type="button" hidden style="margin-top:0">Zainstaluj aplikację na tym urządzeniu</button>
+    <div class="sh2" style="margin-top:16px"><b>Motyw</b></div>
     <div class="sg sg3"><button id="thA" type="button">Auto</button><button id="thL" type="button">Jasny</button><button id="thD" type="button">Ciemny</button></div>
     <div class="sh2">„Auto” podąża za ustawieniem telefonu lub komputera. Motyw jest zapamiętany osobno na każdym urządzeniu.</div>
     <div class="sh2" style="margin-top:16px"><b>Waluta wyświetlania</b></div>
@@ -198,13 +201,15 @@ const DEF={
 const DEF_FX=4.3;
 const ULBL=["Brak oceny","1 · Zbędny","2 · Mało przydatny","3 · Średnio","4 · Przydatny","5 · Niezbędny"];
 const UCOL=["#9ca3af","#f43f5e","#f97316","#eab308","#84cc16","#10b981"];
+const LANG=(()=>{try{const v=localStorage.getItem("stuiver_lang");if(v==="en"||v==="pl")return v}catch(e){}return typeof navigator!=="undefined"&&navigator.language&&!/^pl/i.test(navigator.language)?"en":"pl"})();
+const LOC=LANG=="en"?"en-GB":"pl-PL";
 const $=id=>document.getElementById(id);
 const pad=n=>String(n).padStart(2,"0");
 const fmt=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const clean=x=>String(x==null?"":x).replace(/[<>&"]/g,"").trim().slice(0,60);
 const parseNum=s=>parseFloat(String(s==null?"":s).replace(",",".").replace(/[^0-9.]/g,""));
-const nf=(n,d)=>n.toLocaleString("pl-PL",{minimumFractionDigits:d==null?2:d,maximumFractionDigits:d==null?2:d});
+const nf=(n,d)=>n.toLocaleString(LOC,{minimumFractionDigits:d==null?2:d,maximumFractionDigits:d==null?2:d});
 const eurF=n=>(n<0?"−":"")+"€"+nf(Math.abs(n));
 const plnF=n=>(n<0?"−":"")+nf(Math.abs(n))+" zł";
 const money=n=>cfg.cur=="PLN"?plnF(n):eurF(n);
@@ -361,10 +366,10 @@ function range(){
 }
 function shift(n){const y=ref.getFullYear(),m=ref.getMonth(),d=ref.getDate();ref=per=="w"?new Date(y,m,d+7*n):per=="m"?new Date(y,m+n,1):new Date(y+n,0,1)}
 function label(s,e){
-  if(per=="m")return s.toLocaleDateString("pl-PL",{month:"long",year:"numeric"});
+  if(per=="m")return s.toLocaleDateString(LOC,{month:"long",year:"numeric"});
   if(per=="y")return String(s.getFullYear());
   const o={day:"numeric",month:"short"};
-  return s.toLocaleDateString("pl-PL",o)+" – "+e.toLocaleDateString("pl-PL",{...o,year:"numeric"});
+  return s.toLocaleDateString(LOC,o)+" – "+e.toLocaleDateString(LOC,{...o,year:"numeric"});
 }
 function bars(items,total,colorFn,attr){
   return items.map(([c,v,i],n)=>`<div class="bar"${attr?attr(i):""}><span><span>${esc(c)}</span><span>${money(v)} · ${Math.round(v/total*100)}%</span></span><div class="t"><div class="f" data-w="${v/total*100}%" style="background:${colorFn(i)};transition-delay:${n*90}ms"></div></div></div>`).join("");
@@ -373,7 +378,7 @@ function refreshFilter(){
   const el=$("fcat"),v=el.value,set=[...new Set([...cfg.ce,...cfg.ci,...data.map(r=>r.cat)])],key=set.join("|");
   if(el.dataset.k===key)return;
   el.dataset.k=key;
-  el.innerHTML='<option value="">Wszystkie kategorie</option>'+set.map(c=>`<option>${esc(c)}</option>`).join("");
+  el.innerHTML='<option value="">Wszystkie kategorie</option>'+set.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join("");
   el.value=set.includes(v)?v:"";
 }
 function periodRows(){
@@ -437,7 +442,7 @@ function updateCurUI(){
 /* ---------- formularz dodawania i edycji ---------- */
 function fillCat(sel){
   const l=catsOf(type),c=sel!=null?sel:$("cat").value;
-  $("cat").innerHTML=l.map(x=>`<option>${esc(x)}</option>`).join("")+'<option value="__new">＋ Nowa kategoria…</option>';
+  $("cat").innerHTML=l.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("")+'<option value="__new">＋ Nowa kategoria…</option>';
   $("cat").value=l.includes(c)?c:l[0];
 }
 function setType(t){
@@ -587,7 +592,7 @@ function chart(rows,s,e){
   const last=ti<0?n-1:Math.min(ti,n-1);
   const ci=[],ce=[],cb=[];let a=0,b=0;
   for(let i=0;i<=last;i++){a+=inc[i];b+=exp[i];ci.push(a);ce.push(b);cb.push(a-b)}
-  const name=i=>Y?new Date(s.getFullYear(),i,1).toLocaleDateString("pl-PL",{month:"long"}):new Date(s.getFullYear(),s.getMonth(),s.getDate()+i).toLocaleDateString("pl-PL",{day:"numeric",month:"short"});
+  const name=i=>Y?new Date(s.getFullYear(),i,1).toLocaleDateString(LOC,{month:"long"}):new Date(s.getFullYear(),s.getMonth(),s.getDate()+i).toLocaleDateString(LOC,{day:"numeric",month:"short"});
   const read=i=>{$("v1").textContent=money(ci[i]);$("v2").textContent=money(ce[i]);$("v3").textContent=money(cb[i]);$("cdate").textContent=(i==last&&ti>=0&&ti<=n-1?"stan na ":"")+name(i)};
   if(!rows.length){box.innerHTML='<div class="empty">Brak danych do wykresu</div>';read(last);return}
   const W=box.clientWidth||320,H=200,L=50,R=12,T=12,B=26,pw=W-L-R,ph=H-T-B;
@@ -600,7 +605,7 @@ function chart(rows,s,e){
   for(let i=0;i<n;i++){
     let show=Y?(W>380||i%2==0):per=="w"?true:(i%7==0&&n-1-i>=3)||i==n-1;
     if(!show)continue;
-    const lb=Y?new Date(s.getFullYear(),i,1).toLocaleDateString("pl-PL",{month:"short"}):per=="w"?new Date(s.getFullYear(),s.getMonth(),s.getDate()+i).toLocaleDateString("pl-PL",{weekday:"short"}):String(i+1);
+    const lb=Y?new Date(s.getFullYear(),i,1).toLocaleDateString(LOC,{month:"short"}):per=="w"?new Date(s.getFullYear(),s.getMonth(),s.getDate()+i).toLocaleDateString(LOC,{weekday:"short"}):String(i+1);
     g+=`<text x="${xs(i)}" y="${H-8}" text-anchor="middle" font-size="11" fill="var(--mu)">${lb}</text>`;
   }
   const pts=v=>v.map((q,i)=>xs(i).toFixed(1)+","+ys(q).toFixed(1)).join("L");
@@ -708,7 +713,7 @@ function setCur(c){cfg.cur=c;persist();updateCurUI();renderSettings();render()}
 function renderSettings(){
   document.querySelectorAll(".stabs button").forEach((b,i)=>b.classList.toggle("on",i==stab));
   [0,1,2,3].forEach(i=>{$("sp"+i).hidden=i!=stab});
-  if(stab==0){renderThemeBtns();$("ceur").classList.toggle("on",cfg.cur!="PLN");$("cpln").classList.toggle("on",cfg.cur=="PLN");$("fixfx").value=cfg.fixedFx?String(cfg.fixedFx).replace(".",","):""}
+  if(stab==0){$("lpl").classList.toggle("on",LANG=="pl");$("len").classList.toggle("on",LANG=="en");renderThemeBtns();$("ceur").classList.toggle("on",cfg.cur!="PLN");$("cpln").classList.toggle("on",cfg.cur=="PLN");$("fixfx").value=cfg.fixedFx?String(cfg.fixedFx).replace(".",","):""}
   if(stab==1)renderCats();
   if(stab==2)renderRules();
   if(stab==3)renderBudSet();
@@ -728,7 +733,7 @@ function delCat(t,idx){
 }
 function renameCat(t,idx,v){
   const l=catsOf(t),old=l[idx],nn=clean(v);
-  if(!old||old=="Inne"||!nn||nn==old){renderCats();return}
+  if(!old||old=="Inne"||!nn||nn==old||nn==CN(old)){renderCats();return}
   const exists=l.includes(nn);
   if(t=="e"&&cfg.bud[old]>0){cfg.bud[nn]=exists?Math.round(((cfg.bud[nn]||0)+cfg.bud[old])*100)/100:cfg.bud[old];delete cfg.bud[old]}
   if(exists){l.splice(idx,1);if(t=="e")cfg.cx=cfg.cx.filter(x=>x!=old)}
@@ -742,7 +747,7 @@ function renderCats(){
   $("sctip").textContent=scT=="e"?"„Poza budżetem” wyłącza kategorię z sald, wykresów i podsumowań (np. kaucja, wydatki startowe). Wpisy nadal widać na liście.":"Kategorie wpływów.";
   $("scats").innerHTML=catsOf(scT).map((c,n)=>{
     const sure=delSure===scT+n;
-    return `<div class="cr"><input data-ren="${n}" value="${esc(c)}" maxlength="40"${c=="Inne"?" readonly":""} aria-label="Nazwa kategorii">${scT=="e"?`<button class="cx${cfg.cx.includes(c)?" on":""}" data-xi="${n}">poza budżetem</button>`:""}${c=="Inne"?"":`<button class="cd${sure?" sure":""}" data-di="${n}" aria-label="Usuń kategorię">${sure?"Na pewno?":"✕"}</button>`}</div>`}).join("");
+    return `<div class="cr"><input data-ren="${n}" value="${esc(CN(c))}" maxlength="40"${c=="Inne"?" readonly":""} aria-label="Nazwa kategorii">${scT=="e"?`<button class="cx${cfg.cx.includes(c)?" on":""}" data-xi="${n}">poza budżetem</button>`:""}${c=="Inne"?"":`<button class="cd${sure?" sure":""}" data-di="${n}" aria-label="Usuń kategorię">${sure?"Na pewno?":"✕"}</button>`}</div>`}).join("");
 }
 $("scats").onclick=ev=>{
   const t=ev.target;if(!t||!t.dataset)return;
@@ -763,7 +768,7 @@ $("scte").onclick=()=>{scT="e";delSure=null;renderCats()};$("scti").onclick=()=>
 $("scadd").onclick=()=>{const nn=addCat(scT,$("scnew").value);if(!nn){flag($("scnew"));return}$("scnew").value="";renderCats();fillCat();render()};
 function fillRCat(sel){
   const l=catsOf(rT),c=sel!=null?sel:$("rcat").value;
-  $("rcat").innerHTML=l.map(x=>`<option>${esc(x)}</option>`).join("");$("rcat").value=l.includes(c)?c:l[0];
+  $("rcat").innerHTML=l.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("");$("rcat").value=l.includes(c)?c:l[0];
 }
 function resetRForm(){
   redit=null;$("ramt").value="";$("rnote").value="";$("rday").value="1";$("rfrom").value=nextM(fmt(new Date()).slice(0,7));fillRCat();
@@ -811,7 +816,7 @@ $("curb").onclick=()=>setCur(cfg.cur=="PLN"?"EUR":"PLN");
 $("fixok").onclick=()=>{const v=parseNum($("fixfx").value);cfg.fixedFx=v>0&&v<100?v:null;persist();renderSettings();render();toast(cfg.fixedFx?"Ustawiono kurs stały "+nf(cfg.fixedFx,4):"Kurs stały wyłączony")};
 
 /* ---------- import z pliku ---------- */
-const MN=m=>new Date(+m.slice(0,4),+m.slice(5,7)-1,1).toLocaleDateString("pl-PL",{month:"long",year:"numeric"});
+const MN=m=>new Date(+m.slice(0,4),+m.slice(5,7)-1,1).toLocaleDateString(LOC,{month:"long",year:"numeric"});
 function isheet(o){panel("isheet",o)}
 function normImport(j){
   const arr=Array.isArray(j)?j:(j&&j.entries);if(!Array.isArray(arr))return[];
@@ -961,7 +966,7 @@ $("bset").onclick=()=>{ssheet(true);stab=3;renderSettings()};
 /* ---------- statystyki roczne ---------- */
 let sy=new Date().getFullYear(),sdSel=-1;
 const SCOL=["#f97316","#fbbf24","#f43f5e","#14b8a6","#3b82f6","#9ca3af"];
-const MS3=["sty","lut","mar","kwi","maj","cze","lip","sie","wrz","paź","lis","gru"];
+const MS3=LANG=="en"?["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]:["sty","lut","mar","kwi","maj","cze","lip","sie","wrz","paź","lis","gru"];
 let stM=null;
 function statRender(){
   const Y=String(sy);$("syl").textContent=Y;
@@ -1015,7 +1020,154 @@ $("stch").onclick=ev=>{const t=ev.target&&ev.target.closest&&ev.target.closest("
 const statYear=n=>{sy+=n;sdSel=-1;statRender();setTimeout(()=>document.querySelectorAll("#stshop .f[data-w]").forEach(x=>x.style.width=x.dataset.w),60)};
 $("syp").onclick=()=>statYear(-1);$("syn").onclick=()=>statYear(1);
 
+/* ---------- tłumaczenie na angielski (działa tylko w trybie EN) ---------- */
+const CAT_EN={"Czynsz (huur)":"Rent (huur)","Mieszkanie":"Housing","Zorgverzekering":"Health insurance (zorgverzekering)","Jedzenie":"Food","Kawiarnie / restauracje":"Cafés / restaurants","Czesne (collegegeld)":"Tuition (collegegeld)","Media / internet":"Utilities / internet","Telefon":"Phone","Rozrywka":"Entertainment","Ubrania":"Clothing","Subskrypcje":"Subscriptions","Przesyłki":"Shipping","Kaucja":"Deposit","Opłaty aplikacyjne":"Application fees","Wydatki startowe":"Start-up costs","Inne":"Other","Praca / bijbaan":"Job (bijbaan)","Rodzice":"Parents","Stypendium":"Scholarship"};
+const CN=c=>LANG=="en"&&CAT_EN[c]?CAT_EN[c]:c;
+const CAT_KEYS=Object.keys(CAT_EN).sort((a,b)=>b.length-a.length);
+const trCats=s=>{let o=s;CAT_KEYS.forEach(k=>{if(o.includes(k))o=o.split(k).join(CAT_EN[k])});return o};
+const ENX=Object.assign({},CAT_EN,{
+"⏳ Łączenie…":"⏳ Connecting…","☁️ Zsynchronizowano":"☁️ Synced","📱 Zapis na telefonie":"📱 Saved on this phone","📱 Tylko to urządzenie":"📱 This device only",
+"Tydzień":"Week","Miesiąc":"Month","Rok":"Year","Saldo":"Balance","↑ Wpływy":"↑ Income","↓ Wydatki":"↓ Expenses","Wpływy":"Income","Wydatki":"Expenses",
+"Budżety miesięczne":"Monthly budgets","Ustaw limity kategorii":"Set category limits","Zmień limity":"Change limits","Transakcje":"Transactions","Importuj dane z pliku":"Import data from file",
+"Przebieg budżetu":"Budget over time","Wydatki według kategorii":"Expenses by category","Wydatki według przydatności":"Expenses by usefulness","Wydatki według sklepów":"Expenses by shop",
+"Oceń nieocenione zakupy":"Rate unrated purchases","Porównanie z poprzednim okresem":"Comparison with the previous period","Statystyki roczne":"Yearly statistics",
+"Wydatki według miesięcy i kategorii":"Expenses by month and category","Wydatki według miesięcy":"Expenses by month","Najdroższe sklepy w roku":"Top shops of the year",
+"Edytuj transakcję":"Edit transaction","＋ Wpływ":"＋ Income","－ Wydatek":"－ Expense","Dodaj kategorię":"Add category","Jak przydatny był zakup?":"How useful was the purchase?",
+"Dodaj":"Add","Anuluj":"Cancel","Import danych":"Data import","Zaimportuj":"Import","Ustawienia":"Settings","Gotowe":"Done","Ogólne":"General","Kategorie":"Categories","Cykliczne":"Recurring","Budżety":"Budgets",
+"Motyw":"Theme","Jasny":"Light","Ciemny":"Dark",
+"„Auto” podąża za ustawieniem telefonu lub komputera. Motyw jest zapamiętany osobno na każdym urządzeniu.":"“Auto” follows your phone or computer setting. The theme is remembered separately on each device.",
+"Waluta wyświetlania":"Display currency","Złoty (zł)":"Zloty (zł)",
+"Wpisy są zapisane w euro. W trybie złotówek każdy wpis jest przeliczany kursem z dnia transakcji: kursem z Twojego Excela albo, dla nowych wpisów, kursem NBP, jeśli uda się go pobrać. Kurs możesz poprawić w formularzu wpisu.":"Entries are stored in euros. In zloty mode each entry is converted at the rate of the transaction day: the rate from your Excel file or, for new entries, the NBP rate if it can be fetched. You can correct the rate in the entry form.",
+"Kopia zapasowa":"Backup","Pobierz kopię zapasową (plik)":"Download backup (file)",
+"Zapisuje wpisy, kategorie, limity i reguły cykliczne w jednym pliku. Wczytasz go przyciskiem „Importuj dane z pliku” pod listą transakcji, także na nowym telefonie.":"Saves entries, categories, limits and recurring rules in one file. Load it with the “Import data from file” button under the transaction list, also on a new phone.",
+"Kurs stały (opcjonalnie)":"Fixed rate (optional)","Zastosuj":"Apply",
+"Gdy podasz kurs stały, wszystkie wpisy są przeliczane tym jednym kursem. Puste pole przywraca kurs z dnia transakcji.":"If you set a fixed rate, all entries are converted at that single rate. Leave the field empty to return to the rate from the transaction day.",
+"Zainstaluj aplikację na tym urządzeniu":"Install the app on this device",
+"Limity miesięczne w euro. Puste pole oznacza brak limitu. Aplikacja ostrzega przy 80% i 100% limitu. Limit całego miesiąca jest opcjonalny: bez niego prognoza porównuje wydatki z sumą limitów kategorii. Kategorie „poza budżetem” nie mają limitów.":"Monthly limits in euros. An empty field means no limit. The app warns you at 80% and 100% of a limit. A whole-month limit is optional: without it the forecast compares spending with the sum of the category limits. Categories marked “outside the budget” have no limits.",
+"Cały miesiąc":"Whole month","cały miesiąc":"whole month","Suma limitów kategorii":"Sum of category limits",
+"Wpisy z reguł pojawiają się same w wybranym dniu miesiąca, po otwarciu aplikacji. Jeśli nie otworzysz jej przez kilka miesięcy, uzupełni zaległe miesiące. Dotknij reguły, aby ją edytować.":"Entries from rules appear on their own on the chosen day of the month, when you open the app. If you do not open it for a few months, it fills in the missed months. Tap a rule to edit it.",
+"Nowa lub edytowana reguła":"New or edited rule",
+"„Od” to pierwszy miesiąc reguły. Domyślnie jest to następny miesiąc, żeby nie dublować płatności wpisanej już w tym miesiącu.":"“From” is the first month of the rule. By default it is next month, so that a payment already entered this month is not duplicated.",
+"Dodaj regułę":"Add rule","Anuluj edycję":"Cancel editing","Zapisz zmiany":"Save changes","Oceń zakupy":"Rate purchases",
+"Jak przydatny był ten zakup? 1 = zbędny, 5 = niezbędny":"How useful was this purchase? 1 = unnecessary, 5 = essential","Cofnij":"Undo","Pomiń":"Skip","Zakończ":"Finish",
+"Szukaj: sklep, kategoria, notatka, kwota…":"Search: shop, category, note, amount…","Szukaj":"Search","Poprzedni widok":"Previous view","Następny widok":"Next view","Poprzedni rok":"Previous year","Następny rok":"Next year",
+"Kwota €":"Amount €","Kurs EUR/PLN":"EUR/PLN rate","Nazwa nowej kategorii":"New category name","Notatka (opcjonalnie)":"Note (optional)","np. 4,30":"e.g. 4.30","Kurs stały":"Fixed rate","Nowa kategoria":"New category",
+"brak":"none","Limit całego miesiąca":"Whole-month limit","Kwota":"Amount","Kategoria":"Category","Nazwa (np. Czynsz)":"Name (e.g. Rent)","Nazwa":"Name","Dzień miesiąca":"Day of the month","Od miesiąca":"From month",
+"Edytuj":"Edit","Usuń":"Delete","Usuń kategorię":"Delete category","Nazwa kategorii":"Category name","Usuń regułę":"Delete rule","Na pewno?":"Sure?",
+"Wykres liniowy wpływów, wydatków i salda":"Line chart of income, expenses and balance","Wpisz kwotę, np. 12,50":"Enter an amount, e.g. 12.50",
+"poza budżetem":"outside budget","＋ Nowa kategoria…":"＋ New category…","Wszystkie kategorie":"All categories",
+"Brak wydatków 🎉":"No expenses 🎉","Brak wydatków":"No expenses","Dotknij sklepu, aby zobaczyć jego wpisy":"Tap a shop to see its entries","Brak transakcji w tym okresie":"No transactions in this period",
+"Nic nie znaleziono":"Nothing found","Brak danych do wykresu":"No data for the chart","Brak danych w tym roku":"No data this year","Brak wydatków do porównania":"No expenses to compare",
+"Wyświetlane w złotych (dotknij, aby zmienić na euro)":"Shown in zloty (tap to switch to euro)","Wyświetlane w euro (dotknij, aby zmienić na złote)":"Shown in euro (tap to switch to zloty)",
+"Kwoty w zł według kursu z dnia każdej transakcji":"Amounts in PLN at the rate of each transaction's day",
+"wpisany ręcznie":"entered manually","ostatni znany kurs":"last known rate","kurs wpisu":"entry's rate",
+"Zapisano zmiany ✓":"Changes saved ✓","Dodano ✓":"Added ✓","Dodano i ustawiono powtarzanie co miesiąc ↻":"Added and set to repeat monthly ↻",
+"Pokaż cały poprzedni okres":"Show the whole previous period","Porównaj ten sam zakres dni":"Compare the same range of days",
+"Poprzedni":"Previous","Obecny":"Current","Zmiana":"Change","Razem":"Total","nowa":"new",
+"Wszystkie wydatki w tym okresie mają już ocenę":"All expenses in this period are already rated",
+"Brak oceny":"Not rated","1 · Zbędny":"1 · Unnecessary","2 · Mało przydatny":"2 · Not very useful","3 · Średnio":"3 · Average","4 · Przydatny":"4 · Useful","5 · Niezbędny":"5 · Essential",
+"Usunięto kategorię. Jej wpisy trafiły do „Inne”":"Category deleted. Its entries moved to “Other”","Połączono z istniejącą kategorią":"Merged with an existing category","Zmieniono nazwę kategorii":"Category renamed",
+"„Poza budżetem” wyłącza kategorię z sald, wykresów i podsumowań (np. kaucja, wydatki startowe). Wpisy nadal widać na liście.":"“Outside budget” removes a category from balances, charts and summaries (e.g. deposit, start-up costs). Entries are still visible in the list.",
+"Kategorie wpływów.":"Income categories.",
+"Brak wydatków cyklicznych. Dodaj pierwszy poniżej.":"No recurring expenses. Add the first one below.",
+"Usunięto regułę. Dotychczasowe wpisy zostają":"Rule deleted. Existing entries stay","Zapisano regułę ↻":"Rule saved ↻","Kurs stały wyłączony":"Fixed rate turned off",
+"Nie rozpoznano pliku. Wybierz plik importu przygotowany dla Stuiver (.json).":"File not recognised. Choose an import file prepared for Stuiver (.json).",
+"Nowych wpisów:":"New entries:","Zaktualizowanych (np. zmieniona kategoria lub kurs):":"Updated (e.g. changed category or rate):","Uzupełnione kursy walut w edytowanych wpisach:":"Exchange rates filled in on edited entries:",
+"Plik zawiera ustawienia (kategorie, limity, reguły cykliczne, waluta). Zastąpią obecne ustawienia.":"The file contains settings (categories, limits, recurring rules, currency). They will replace the current settings.",
+"Wydatki łącznie:":"Total expenses:","w tym poza budżetem:":"of which outside budget:",
+"Pobrano kopię zapasową ✓":"Backup downloaded ✓","Nie udało się pobrać kopii":"Could not download the backup",
+"Prognoza na koniec miesiąca":"Forecast for the end of the month","Na początku miesiąca prognoza jest orientacyjna.":"Early in the month the forecast is only indicative.",
+"Nie ustawiono limitów. Ustaw je, aby dostać paski postępu i ostrzeżenia.":"No limits set. Set them to get progress bars and warnings.",
+"średnio / mies.":"avg. / month","Dotknij słupka, aby zobaczyć szczegóły miesiąca":"Tap a bar to see the month's details",
+"Ta strona działa poza podglądem Claude, więc nie ma dostępu do konta. Otwórz aplikację z karty w rozmowie albo z listy artefaktów na claude.ai.":"This page is running outside the Claude preview, so it has no access to your account. Open the app from the card in the conversation or from your artifacts list on claude.ai.",
+"Baza danych jest niedostępna w tym widoku. Zaloguj się na claude.ai i otwórz aplikację z karty w rozmowie.":"The database is not available in this view. Sign in to claude.ai and open the app from the card in the conversation.",
+"Brak informacji o koncie w tym widoku.":"No account information in this view.",
+"Czekam na Twoją zgodę na zapis danych. Potwierdź okno od Claude, jeśli się pokazało.":"Waiting for your permission to save data. Confirm the Claude dialog if it appeared.",
+"Odmówiono zgody na zapis danych w koncie (zmienisz to w menu Uprawnienia tej aplikacji).":"Permission to save data in your account was denied (you can change this in the app's Permissions menu).",
+"Zapis danych w koncie jest niedostępny dla tej aplikacji w tym widoku.":"Saving data to your account is not available for this app in this view.",
+"Nie rozpoznano Twojego konta (brak identyfikatora). Zaloguj się na claude.ai.":"Your account was not recognised (no identifier). Sign in to claude.ai.",
+"Łączę z kontem…":"Connecting to your account…","Brak odpowiedzi z konta przez 10 sekund.":"No response from your account for 10 seconds.",
+"błąd":"error","nieznany":"unknown"
+});
+const ntr=(w,n)=>n==1?w[0]:w[1];
+const ENR=[
+ [/^↻ Powtarzaj co miesiąc: (nie|tak)$/,m=>"↻ Repeat monthly: "+(m[1]=="tak"?"yes":"no")],
+ [/^Zapis do konta nie powiódł się \((.*)\), dane są tylko na tym urządzeniu\.(?: Dotknij plakietki, aby spróbować ponownie\.)?$/,m=>"Saving to your account failed ("+(ENX[m[1]]||m[1])+"), the data is only on this device."+(/Dotknij/.test(m[0])?" Tap the badge to try again.":"")],
+ [/^Błąd bazy: (.*?)\.(?: Dotknij plakietki, aby spróbować ponownie\.)?$/,m=>"Database error: "+(ENX[m[1]]||m[1])+"."+(/Dotknij/.test(m[0])?" Tap the badge to try again.":"")],
+ [/^Błąd synchronizacji: (.*?)\.(?: Dotknij plakietki, aby spróbować ponownie\.)?$/,m=>"Sync error: "+(ENX[m[1]]||m[1])+"."+(/Dotknij/.test(m[0])?" Tap the badge to try again.":"")],
+ [/^(.*\S) Dotknij plakietki, aby spróbować ponownie\.$/,m=>(tr(m[1])||m[1])+" Tap the badge to try again."],
+ [/^Poza budżetem w tym okresie: (.+) \(kategorie oznaczone jako poza budżetem\)$/,m=>"Outside the budget in this period: "+m[1]+" (categories marked as outside the budget)"],
+ [/^Kwoty w zł według stałego kursu (.+)$/,m=>"Amounts in PLN at a fixed rate of "+m[1]],
+ [/^(\d+) (?:wpis|wpisy|wpisów) · wydatki (.+?)(?: · wpływy (.+?))?(?: · poza budżetem (.+))?$/,m=>m[1]+" "+ntr(["entry","entries"],+m[1])+" · expenses "+m[2]+(m[3]?" · income "+m[3]:"")+(m[4]?" · outside budget "+m[4]:"")],
+ [/^(.+) · kurs ([\d.,]+)$/,m=>m[1]+" · rate "+m[2]],
+ [/^stan na (.+)$/,m=>"as of "+m[1]],
+ [/^kurs NBP z dnia (.+)$/,m=>"NBP rate from "+m[1]],
+ [/^Dodano (\d+) (?:wpis|wpisy|wpisów) cykliczne ↻$/,m=>"Added "+m[1]+" recurring "+ntr(["entry","entries"],+m[1])+" ↻"],
+ [/^Zapisano regułę i dodano (\d+) (?:wpis|wpisy|wpisów) ↻$/,m=>"Rule saved and "+m[1]+" "+ntr(["entry","entries"],+m[1])+" added ↻"],
+ [/^Ustawiono kurs stały (.+)$/,m=>"Fixed rate set to "+m[1]],
+ [/^Błąd: (.*)$/,m=>"Error: "+m[1]],
+ [/^Przekroczono budżet: ([^·]+)$/,m=>"Over budget: "+trCats(m[1].replace("cały miesiąc","whole month"))],
+ [/^([^·]+): (\d+)% budżetu$/,m=>trCats(tr(m[1])||m[1])+": "+m[2]+"% of budget"],
+ [/^Przekroczony budżet: (.+)$/,m=>"Over budget: "+trCats(m[1].replace("Cały miesiąc","Whole month"))],
+ [/^Blisko limitu \(od 80%\): (.+)$/,m=>"Close to the limit (from 80%): "+trCats(m[1].replace("Cały miesiąc","Whole month"))],
+ [/^z limitu (.+)$/,m=>"limit "+m[1]],
+ [/^Dotychczas (.+)\. Tempo wydatków zmiennych: (.+) dziennie, do końca miesiąca zostało (\d+) (?:dzień|dni) \(wpisy cykliczne liczone osobno\)\.$/,m=>"So far "+m[1]+". Variable spending pace: "+m[2]+" per day, "+m[3]+" "+ntr(["day","days"],+m[3])+" left in the month (recurring entries counted separately)."],
+ [/^Limit miesiąca jest już przekroczony o (.+)\.$/,m=>"The monthly limit is already exceeded by "+m[1]+"."],
+ [/^Aby zmieścić się w limicie, wydawaj średnio$/,()=>"To stay within the limit, spend on average"],
+ [/^dziennie \(teraz: (.+)\)\.$/,m=>"per day (now: "+m[1]+")."],
+ [/^Ostatni dzień miesiąca\. Do limitu zostało (.+)\.$/,m=>"Last day of the month. Left until the limit: "+m[1]+"."],
+ [/^przekroczono o (.+)$/,m=>"over by "+m[1]],
+ [/^prognoza (.+) przekroczy limit$/,m=>"forecast "+m[1]+" will exceed the limit"],
+ [/^Limit: (.+)$/,m=>"Limit: "+(tr(m[1])||m[1])],
+ [/^Oceń nieocenione zakupy \((\d+)\)$/,m=>"Rate unrated purchases ("+m[1]+")"],
+ [/^(\d+) z (\d+)$/,m=>m[1]+" of "+m[2]],
+ [/^Gotowe! Oceniono (\d+) (?:zakup|zakupów)\.$/,m=>"Done! Rated "+m[1]+" "+ntr(["purchase","purchases"],+m[1])+"."],
+ [/^(.*) · do (\d+)\. dnia okresu$/,m=>m[1]+" · up to day "+m[2]+" of the period"],
+ [/^Wszystkie (\d+) wpisów z tego pliku są już w aplikacji bez zmian\. Nic do zrobienia\.$/,m=>"All "+m[1]+" entries in this file are already in the app, unchanged. Nothing to do."],
+ [/^Zakres dat: (.+)$/,m=>"Date range: "+m[1]],
+ [/^Zapisano (\d+) wpisów ✓$/,m=>"Saved "+m[1]+" entries ✓"],
+ [/^(.+) · (\d+)\. dnia miesiąca · od (\d{4}-\d{2})$/,m=>(tr(m[1])||m[1])+" · day "+m[2]+" of the month · from "+m[3]],
+ [/^Średnie z (\d+) (?:miesiąca|miesięcy)( \(bez trwającego miesiąca\))?\. Razem w (\d{4}): wydatki (.+?), wpływy (.+)\.$/,m=>"Averages from "+m[1]+" "+ntr(["month","months"],+m[1])+(m[2]?" (excluding the current month)":"")+". Total in "+m[3]+": expenses "+m[4]+", income "+m[5]+"."],
+ [/^Najdroższy miesiąc:$/,()=>"Most expensive month:"],
+ [/^\((.+)\), najtańszy:$/,m=>"("+m[1]+"), cheapest:"],
+ [/^Pozostałe(?: \((\d+)\))?$/,m=>"Remaining"+(m[1]?" ("+m[1]+")":"")],
+ [/^śr\. (.+)\/mies\.$/,m=>"avg. "+m[1]+"/month"],
+ [/^(.+ \d{4}): (.+)$/,m=>trCats(m[1]+": "+m[2])],
+];
+function tr(s){
+  if(Object.prototype.hasOwnProperty.call(ENX,s))return ENX[s];
+  for(const[re,f]of ENR){const m=s.match(re);if(m)return f(m)}
+  if(s.includes(" · ")){const ps=s.split(" · "),o=ps.map(p=>tr(p));if(o.some(x=>x!=null))return ps.map((p,i)=>o[i]!=null?o[i]:p).join(" · ")}
+  return null;
+}
+function initI18n(){
+  const h=document.documentElement;if(h&&h.setAttribute)h.setAttribute("lang","en");
+  const wt=new WeakMap(),wa=new WeakMap(),ATTR=["placeholder","aria-label","title"];
+  const doText=n=>{const v=n.nodeValue;if(!v||wt.get(n)===v)return;const c=v.trim();if(!/[A-Za-zĄ-ż]{2}/.test(c))return;const t=tr(c);if(t==null||t===c)return;const nv=v.replace(c,()=>t);wt.set(n,nv);n.nodeValue=nv};
+  const doEl=el=>{if(el.nodeType!==1)return;const tg=el.tagName;if(tg==="SCRIPT"||tg==="STYLE")return;
+    ATTR.forEach(a=>{const v=el.getAttribute(a);if(!v)return;const k=wa.get(el)||{};if(k[a]===v)return;const t=tr(v.trim());if(t!=null&&t!==v){k[a]=t;wa.set(el,k);el.setAttribute(a,t)}})};
+  const walk=root=>{
+    if(root.nodeType===3){doText(root);return}
+    if(root.nodeType!==1)return;
+    doEl(root);const w=document.createTreeWalker(root,5);let n;
+    while((n=w.nextNode()))n.nodeType===3?doText(n):doEl(n);
+  };
+  walk(document.body);
+  new MutationObserver(ms=>{ms.forEach(m=>{
+    if(m.type==="characterData")doText(m.target);
+    else if(m.type==="attributes")doEl(m.target);
+    else m.addedNodes.forEach(walk);
+  })}).observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:ATTR});
+}
+const setLang=l=>{try{localStorage.setItem("stuiver_lang",l)}catch(e){}try{location.reload()}catch(e){}};
+$("lpl").onclick=()=>setLang("pl");$("len").onclick=()=>setLang("en");
+let deferredInst=null;
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredInst=e;$("inst").hidden=false});
+window.addEventListener("appinstalled",()=>{$("inst").hidden=true});
+$("inst").onclick=async()=>{if(!deferredInst)return;try{deferredInst.prompt();await deferredInst.userChoice}catch(x){}deferredInst=null;$("inst").hidden=true};
+
 /* ---------- start ---------- */
+if(LANG=="en")initI18n();
 applyTheme(getTheme());loadLocal();
 const ar0=applyRecurring();if(ar0.changed)localSave();
 setType("i");setUse(3);setRep();updateCurUI();resetRForm();setPer("m");
